@@ -68,6 +68,10 @@ else
                         {
                             <a href="#" @onclick="() => MarkPayment(i)" @onclick:preventDefault>Pay</a>
                         }
+                        else
+                        {
+                            <span class="text-success">✓</span>
+                        }
                     </td>
                 </tr>
             }

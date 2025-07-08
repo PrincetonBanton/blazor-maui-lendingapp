@@ -89,11 +89,13 @@ public class LedgersController : ControllerBase
         return Ok();
     }
 
-
     public class PaymentRequest
     {
         public Guid LoanId { get; set; }
         public DateTime PaymentDate { get; set; }
-        public Guid? CollectorId { get; set; } // Add this
+        public Guid? CollectorId { get; set; }
+        public int PaymentNumber { get; set; }
+        public double PaymentAmount { get; set; } // ✅ Add this
     }
+
 }
