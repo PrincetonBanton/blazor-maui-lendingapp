@@ -1,0 +1,131 @@
+﻿@page "/ledgers/view/{LoanId:guid}"
+@inject HttpClient Http
+@using LendingApp.Shared.Models
+
+
+@if (loan == null || borrower == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="top-section-grid mb-4">
+        <!-- Column 1: Profile Image -->
+        <div>
+            <img src="images/profile.png" alt="Profile" style="width: 80px; height: 80px; object-fit: cover;" />
+        </div>
+
+        <!-- Column 2: Personal Info -->
+        <div class="info-grid">
+            <div><strong>Name:</strong></div>
+            <div>@borrower.FullName</div>
+            <div><strong>Address:</strong></div>
+            <div>@borrower.Address</div>
+            <div><strong>Contact:</strong></div>
+            <div>@borrower.ContactNumber</div>
+        </div>
+
+        <!-- Column 3: Loan Info -->
+        <div class="info-grid">
+            <div><strong>Principal:</strong></div>
+            <div>@loan.PrincipalAmount.ToString("N2")</div>
+            <div><strong>Balance:</strong></div>
+            <div>@loan.RemainingBalance.ToString("N2")</div>
+        </div>
+
+        <!-- Column 4: Payment Info -->
+        <div class="info-grid">
+            <div><strong>Installment:</strong></div>
+            <div>@loan.InstallmentAmount.ToString("N2")</div>
+            <div><strong>Payments:</strong></div>
+            <div>@loan.PaymentsMade / @loan.ExpectedPayments</div>
+        </div>
+    </div>
+
+    <table class="table list-table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Due Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 1; i <= loan.ExpectedPayments; i++)
+            {
+                var dueDate = GetDueDate(loan, i);
+                bool isPaid = i <= loan.PaymentsMade;
+
+                <tr>
+                    <td>@i</td>
+                    <td>@dueDate.ToShortDateString()</td>
+                    <td>@loan.InstallmentAmount.ToString("N2")</td>
+                    <td>@(isPaid ? "Paid" : "Pending")</td>
+                    <td>
+                        @if (!isPaid)
+                        {
+                            <a href="#" @onclick="() => MarkPayment(i)" @onclick:preventDefault>Pay</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public Guid LoanId { get; set; }
+
+    private Loan? loan;
+    private Borrower? borrower;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loan = await Http.GetFromJsonAsync<Loan>($"api/loans/{LoanId}");
+        if (loan != null)
+        {
+            borrower = await Http.GetFromJsonAsync<Borrower>($"api/borrowers/{loan.BorrowerId}");
+        }
+    }
+
+    DateTime GetDueDate(Loan loan, int paymentNumber)
+    {
+        var start = loan.StartDate ?? DateTime.Now;
+        var interval = loan.PaymentFrequency switch
+        {
+            PaymentFrequency.Daily => TimeSpan.FromDays(1),
+            PaymentFrequency.Weekly => TimeSpan.FromDays(7),
+            PaymentFrequency.Monthly => TimeSpan.FromDays(30),
+            _ => TimeSpan.FromDays(30)
+        };
+        return start.AddDays(interval.TotalDays * (paymentNumber - 1));
+    }
+
+    async Task MarkPayment(int number)
+    {
+        if (loan == null) return;
+
+        var response = await Http.PostAsJsonAsync("api/ledgers/pay", new
+        {
+            LoanId = loan.Id,
+            PaymentNumber = number,
+            PaymentDate = DateTime.Now,
+            CollectorId = loan.CollectorId 
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            loan.PaymentsMade++;
+            loan.RemainingBalance -= loan.InstallmentAmount;
+            StateHasChanged();
+        }
+        else
+        {
+            Console.WriteLine("Payment failed: " + await response.Content.ReadAsStringAsync());
+        }
+    }
+
+
+}

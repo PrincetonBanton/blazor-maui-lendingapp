@@ -1,0 +1,62 @@
+﻿@page "/collectors"
+@inject HttpClient Http
+@using LendingApp.Shared.Models
+
+<a class="btn btn-primary" href="/collectors/add">Add New Collector</a>
+
+@if (collectors == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table list-table">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Contact</th>
+                <th>Assigned Area</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in collectors)
+            {
+                <tr>
+                    <td>@c.FullName</td>
+                    <td>@c.ContactNumber</td>
+                    <td>@c.AssignedArea</td>
+                    <td>
+                        <a class="action-btn" href="/collectors/edit/@c.Id">Edit</a>
+                        <a class="text-danger" href="#" @onclick="() => DeleteCollector(c.Id)" @onclick:preventDefault>Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Collector> collectors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        collectors = await Http.GetFromJsonAsync<List<Collector>>("api/collectors");
+    }
+
+    async Task DeleteCollector(Guid id)
+    {
+        if (await JsConfirm($"Are you sure you want to delete collector #{id}?"))
+        {
+            await Http.DeleteAsync($"api/collectors/{id}");
+            collectors = await Http.GetFromJsonAsync<List<Collector>>("api/collectors");
+        }
+    }
+
+    async Task<bool> JsConfirm(string message)
+    {
+        return await JS.InvokeAsync<bool>("confirm", message);
+    }
+
+    [Inject] IJSRuntime JS { get; set; }
+}

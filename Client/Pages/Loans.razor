@@ -1,0 +1,121 @@
+﻿@page "/loans"
+@inject HttpClient Http
+@using LendingApp.Shared.Models
+
+<a class="btn btn-primary" href="/loans/add">Add New Loan</a>
+
+@if (loans == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!loans.Any())
+{
+    <p>No loans found.</p>
+}
+else
+{
+    <table class="table list-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Application</th>
+                <th>Principal</th>
+                <th>Approval</th>
+                <th>Start Date</th>
+                @* <th>End Date</th> *@
+                <th>Terms</th>
+                <th>Interest</th>
+                <th>Mode</th>
+                <th>Payments</th>
+                <th>Installment</th>
+                <th>Status</th>
+                <th>Action</th>
+                <th>Options</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var loan in loans)
+            {
+                var borrower = borrowerDict.TryGetValue(loan.BorrowerId, out var name) ? name : "(Unknown)";
+                <tr>
+                    <td>@borrower</td>
+                    <td>@loan.ApplicationDate.ToShortDateString()</td>
+                    <td>@loan.PrincipalAmount.ToString("N2")</td>
+                    <td>@(loan.ApprovalDate?.ToShortDateString() ?? "-")</td>
+                    <td>@(loan.StartDate?.ToShortDateString() ?? "-")</td>
+                    @* <td>@(loan.EndDate?.ToShortDateString() ?? "-")</td> *@
+                    <td>@loan.TermInMonths</td>
+                    <td>@loan.MonthlyInterestRate</td>
+                    <td>@loan.PaymentFrequency</td>
+                    <td>@loan.ExpectedPayments</td>
+                    <td>@loan.InstallmentAmount.ToString("N2")</td
+                    <td>@loan.Status.ToString()</td>
+                    <td>
+                        @if (loan.Status == LoanStatus.Pending)
+                        {
+                            <a href="#" @onclick="() => ConfirmStatusChange(loan.Id, LoanStatus.Approved)" @onclick:preventDefault>Approve</a>
+                            <a href="#" @onclick="() => ConfirmStatusChange(loan.Id, LoanStatus.Denied)" @onclick:preventDefault>Deny</a>
+                        }
+                    </td>
+                    <td>
+                        <a href="/loans/edit/@loan.Id">Edit</a> 
+                        <a class="text-danger" href="#" @onclick="() => ConfirmDeleteLoan(loan.Id)" @onclick:preventDefault>Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@inject IJSRuntime JS
+
+@code {
+    private List<Loan>? loans;
+    private Dictionary<Guid, string> borrowerDict = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var borrowers = await Http.GetFromJsonAsync<List<Borrower>>("api/borrowers");
+        borrowerDict = borrowers.ToDictionary(b => b.Id, b => b.FullName);
+
+        loans = await Http.GetFromJsonAsync<List<Loan>>("api/loans");
+    }
+
+    private async Task ConfirmDeleteLoan(Guid id)
+    {
+        var confirm = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delete loan:\n{id}?");
+        if (confirm)
+        {
+            await DeleteLoan(id);
+        }
+    }
+
+    private async Task DeleteLoan(Guid id)
+    {
+        await Http.DeleteAsync($"api/loans/{id}");
+        loans = await Http.GetFromJsonAsync<List<Loan>>("api/loans");
+    }
+
+    private async Task ConfirmStatusChange(Guid loanId, LoanStatus newStatus)
+    {
+        var confirm = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to set status to {newStatus}?");
+        if (confirm)
+        {
+            await UpdateStatus(loanId, newStatus);
+        }
+    }
+
+    private async Task UpdateStatus(Guid loanId, LoanStatus newStatus)
+    {
+        var response = await Http.PutAsJsonAsync($"api/loans/{loanId}/status", newStatus);
+        if (response.IsSuccessStatusCode)
+        {
+            var loan = loans?.FirstOrDefault(l => l.Id == loanId);
+            if (loan is not null)
+            {
+                loan.Status = newStatus;
+                StateHasChanged();
+            }
+        }
+    }
+}

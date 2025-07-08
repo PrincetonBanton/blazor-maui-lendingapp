@@ -1,0 +1,34 @@
+﻿@using LendingApp.Shared.Models
+@using Microsoft.AspNetCore.Components.Forms
+
+<EditForm Model="Collector" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Full Name</label>
+        <InputText class="form-control" @bind-Value="Collector.FullName" />
+    </div>
+
+    <div class="mb-3">
+        <label>Contact Number</label>
+        <InputText class="form-control" @bind-Value="Collector.ContactNumber" />
+    </div>
+
+    <div class="mb-3">
+        <label>Assigned Area</label>
+        <InputText class="form-control" @bind-Value="Collector.AssignedArea" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">Save</button>
+</EditForm>
+
+@code {
+    [Parameter] public Collector Collector { get; set; } = new();
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+    private async Task HandleValidSubmit()
+    {
+        await OnValidSubmit.InvokeAsync();
+    }
+}

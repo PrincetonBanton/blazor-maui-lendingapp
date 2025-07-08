@@ -1,0 +1,32 @@
+﻿@page "/borrowers/edit/{Id:guid}"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using LendingApp.Shared.Models
+
+<h3>Edit Borrower</h3>
+
+@if (borrower == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <BorrowerForm Borrower="borrower" OnValidSubmit="HandleSubmit" />
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Borrower? borrower;
+
+    protected override async Task OnInitializedAsync()
+    {
+        borrower = await Http.GetFromJsonAsync<Borrower>($"api/borrowers/{Id}");
+    }
+
+    private async Task HandleSubmit()
+    {
+        await Http.PutAsJsonAsync($"api/borrowers/{Id}", borrower);
+        Nav.NavigateTo("/borrowers");
+    }
+}

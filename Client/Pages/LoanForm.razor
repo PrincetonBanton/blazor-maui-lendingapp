@@ -1,0 +1,68 @@
+﻿@using LendingApp.Shared.Models
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Components.Forms
+
+<EditForm Model="Loan" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Borrower</label>
+        <InputSelect class="form-control" @bind-Value="Loan.BorrowerId">
+            <option value="">-- Select Borrower --</option>
+            @foreach (var b in Borrowers)
+            {
+                <option value="@b.Id">@b.FullName</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label>Principal Amount</label>
+        <InputNumber class="form-control" @bind-Value="Loan.PrincipalAmount" />
+    </div>
+
+    <div class="mb-3">
+        <label>Term in Months</label>
+        <InputNumber class="form-control" @bind-Value="Loan.TermInMonths" />
+    </div>
+
+    <div class="mb-3">
+        <label>Monthly Interest Rate (%)</label>
+        <InputNumber class="form-control" @bind-Value="Loan.MonthlyInterestRate" />
+    </div>
+
+    <div class="mb-3">
+        <label>Payment Frequency</label>
+        <InputSelect class="form-control" @bind-Value="Loan.PaymentFrequency">
+            @foreach (var freq in Enum.GetValues<PaymentFrequency>())
+            {
+                <option value="@freq">@freq</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label>Application Date</label>
+        <InputDate class="form-control" @bind-Value="Loan.ApplicationDate" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">Save</button>
+</EditForm>
+
+@code {
+    [Parameter] public Loan Loan { get; set; } = new();
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+    private List<Borrower> Borrowers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Borrowers = await Http.GetFromJsonAsync<List<Borrower>>("api/borrowers");
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await OnValidSubmit.InvokeAsync();
+    }
+}

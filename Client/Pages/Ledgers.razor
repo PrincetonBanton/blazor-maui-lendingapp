@@ -1,0 +1,101 @@
+﻿@page "/ledgers"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using LendingApp.Shared.Models
+
+@if (loans == null || borrowers == null || collectors == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table list-table">
+        <thead>
+            <tr>
+                <th>Borrower</th>
+                <th>Total Amount</th>
+                <th>Installment</th>
+                <th>Payments Made</th>
+                <th>Remaining Balance</th>
+                <th>Actions</th>
+                <th>Collector</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var loan in loans.Where(l => l.Status == LoanStatus.Approved))
+            {
+                var borrower = borrowers.FirstOrDefault(b => b.Id == loan.BorrowerId);
+                var collector = collectors.FirstOrDefault(c => c.Id == loan.CollectorId);
+
+                <tr>
+                    <td>@(borrower?.FullName ?? "Unknown")</td>
+                    <td>@loan.TotalAmount.ToString("N2")</td>
+                    <td>@loan.InstallmentAmount.ToString("N2")</td>
+                    <td>@loan.PaymentsMade / @loan.ExpectedPayments</td>
+                    <td>@loan.RemainingBalance.ToString("N2")</td>
+                    <td>
+                        <a href="#" @onclick="() => ViewLedger(loan.Id)" @onclick:preventDefault>View Ledger</a>
+                    </td>
+                    <td>
+                        @if (loan.CollectorId == null)
+                        {
+                            <select @onchange="async e => await AssignCollector(loan.Id, Guid.Parse(e.Value!.ToString()))">
+                                <option disabled selected value="">Assign Collector</option>
+                                @foreach (var c in collectors)
+                                {
+                                    <option value="@c.Id">@c.FullName</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            @collector?.FullName
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Loan>? loans;
+    private List<Borrower>? borrowers;
+    private List<Collector>? collectors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var loanTask = Http.GetFromJsonAsync<List<Loan>>("api/loans");
+        var borrowerTask = Http.GetFromJsonAsync<List<Borrower>>("api/borrowers");
+        var collectorTask = Http.GetFromJsonAsync<List<Collector>>("api/collectors");
+
+        await Task.WhenAll(loanTask, borrowerTask, collectorTask);
+
+        loans = loanTask.Result;
+        borrowers = borrowerTask.Result;
+        collectors = collectorTask.Result;
+    }
+
+    private void ViewLedger(Guid loanId)
+    {
+        Nav.NavigateTo($"/ledgers/view/{loanId}");
+    }
+
+    private async Task AssignCollector(Guid loanId, Guid collectorId)
+    {
+        var response = await Http.PutAsJsonAsync($"api/loans/{loanId}/assign-collector", collectorId);
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadData(); // Refresh data
+        }
+        else
+        {
+            Console.WriteLine("Failed to assign collector");
+        }
+    }
+}

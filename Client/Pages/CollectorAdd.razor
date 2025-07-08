@@ -1,0 +1,18 @@
+﻿@page "/collectors/add"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using LendingApp.Shared.Models
+
+<h3>Add Collector</h3>
+
+<CollectorForm Collector="collector" OnValidSubmit="HandleSubmit" />
+
+@code {
+    private Collector collector = new();
+
+    private async Task HandleSubmit()
+    {
+        await Http.PostAsJsonAsync("api/collectors", collector);
+        Nav.NavigateTo("/collectors");
+    }
+}

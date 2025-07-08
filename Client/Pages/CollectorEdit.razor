@@ -1,0 +1,31 @@
+﻿@page "/collectors/edit/{Id:guid}"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using LendingApp.Shared.Models
+
+<h3>Edit Collector</h3>
+
+@if (collector == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <CollectorForm Collector="collector" OnValidSubmit="HandleSubmit" />
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private Collector? collector;
+
+    protected override async Task OnInitializedAsync()
+    {
+        collector = await Http.GetFromJsonAsync<Collector>($"api/collectors/{Id}");
+    }
+
+    private async Task HandleSubmit()
+    {
+        await Http.PutAsJsonAsync($"api/collectors/{Id}", collector);
+        Nav.NavigateTo("/collectors");
+    }
+}

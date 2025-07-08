@@ -1,0 +1,62 @@
+﻿@page "/borrowers"
+@inject HttpClient Http
+@using LendingApp.Shared.Models
+
+<a class="btn btn-primary" href="/borrowers/add">Add New Borrower</a>
+
+@if (borrowers == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table list-table">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Contact</th>
+                <th>Address</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var b in borrowers)
+            {
+                <tr>
+                    <td>@b.FullName</td>
+                    <td>@b.ContactNumber</td>
+                    <td>@b.Address</td>
+                        <td>
+                            <a class="action-btn" href="/borrowers/edit/@b.Id">Edit</a>
+                            <a class="text-danger" href="#" @onclick ="() => DeleteBorrower(b.Id)" @onclick:preventDefault>Delete</a>
+                        </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Borrower> borrowers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        borrowers = await Http.GetFromJsonAsync<List<Borrower>>("api/borrowers");
+    }
+
+    async Task DeleteBorrower(Guid id)
+    {
+        if (await JsConfirm($"Are you sure you want to delete borrower #{id}?"))
+        {
+            await Http.DeleteAsync($"api/borrowers/{id}");
+            borrowers = await Http.GetFromJsonAsync<List<Borrower>>("api/borrowers");
+        }
+    }
+
+    async Task<bool> JsConfirm(string message)
+    {
+        return await JS.InvokeAsync<bool>("confirm", message);
+    }
+
+    [Inject] IJSRuntime JS { get; set; }
+}

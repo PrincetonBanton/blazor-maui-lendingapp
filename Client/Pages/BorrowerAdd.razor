@@ -1,0 +1,18 @@
+﻿@page "/borrowers/add"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using LendingApp.Shared.Models
+
+<h3>Add Borrower</h3>
+
+<BorrowerForm Borrower="borrower" OnValidSubmit="HandleSubmit" />
+
+@code {
+    private Borrower borrower = new();
+
+    private async Task HandleSubmit()
+    {
+        await Http.PostAsJsonAsync("api/borrowers", borrower);
+        Nav.NavigateTo("/borrowers");
+    }
+}
