@@ -66,24 +66,67 @@ else
                     <td>
                         @if (!isPaid)
                         {
-                            <a href="#" @onclick="() => MarkPayment(i)" @onclick:preventDefault>Pay</a>
+                            <a href="#" @onclick="() => ConfirmAutoPay(i)" @onclick:preventDefault>Auto</a>
+                            <a href="#" @onclick="ShowPayForm" @onclick:preventDefault>Pay</a>
                         }
                         else
                         {
                             <span class="text-success">✓</span>
                         }
+
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+
+    @if (showPayDialog)
+    {
+        <div class="modal-backdrop">
+            <div class="modal-box">
+                <h4>Record Payment</h4>
+                <div class="mb-2"><strong>Loan ID:</strong> @loan!.Id</div>
+                <div class="mb-2"><strong>Collector:</strong> @loan.CollectorId</div>
+                <div class="mb-3"><strong>Due #:</strong> @duePaymentNumber</div>
+
+                <div class="form-group">
+                    <label>Payment Date</label>
+                    <input type="date" class="form-control" @bind="paymentDate" />
+                </div>
+
+                <div class="form-group">
+                    <label>Payment Amount</label>
+                    <input type="number" step="0.01" class="form-control" @bind="paymentAmount" />
+                </div>
+
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <input type="text" class="form-control" @bind="remarks" />
+                </div>
+
+                <div class="mt-3 d-flex justify-content-end">
+                    <button class="btn btn-secondary me-2" @onclick="ClosePayDialog">Cancel</button>
+                    <button class="btn btn-primary" disabled>Submit (Coming soon)</button>
+                </div>
+            </div>
+        </div>
+    }
+
 }
 
+@inject IJSRuntime JS
+@using System.Text.Json;
 @code {
     [Parameter] public Guid LoanId { get; set; }
-
     private Loan? loan;
     private Borrower? borrower;
+
+    // Modal state and input values
+    private bool showPayDialog = false;
+    private DateTime paymentDate = DateTime.Now;
+    private double paymentAmount;
+    private string remarks = string.Empty;
+    private int duePaymentNumber;
 
     protected override async Task OnInitializedAsync()
     {
@@ -92,6 +135,44 @@ else
         {
             borrower = await Http.GetFromJsonAsync<Borrower>($"api/borrowers/{loan.BorrowerId}");
         }
+    }
+
+    async Task ConfirmAutoPay(int paymentNumber)
+    {
+        if (loan == null) return;
+        string message = $"Auto Pay:\n" +
+                         $"- Loan ID: {loan.Id}\n" +
+                         $"- Payment #: {paymentNumber}\n" +
+                         $"- Amount: {loan.InstallmentAmount:N2}\n" +
+                         $"- Date: {DateTime.Today:yyyy-MM-dd}\n\n" +
+                         $"Proceed with payment?";
+
+        var result = await JS.InvokeAsync<string>("prompt", message, "yes");
+        if (result?.ToLower() == "yes")
+        {
+            await MarkPayment(paymentNumber);
+        }
+    }
+
+    async Task ShowPayForm()
+    {
+        // var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+        // string json = JsonSerializer.Serialize(loan, jsonOptions);
+        // await JS.InvokeVoidAsync("alert", $"Loan Data:\n{json}");
+
+        if (loan == null) return;
+
+        // Setup inputs
+        paymentDate = DateTime.Now;
+        paymentAmount = loan.InstallmentAmount;
+        remarks = string.Empty;
+        duePaymentNumber = loan.PaymentsMade + 1;
+
+        showPayDialog = true;
+    }
+    void ClosePayDialog()
+    {
+        showPayDialog = false;
     }
 
     DateTime GetDueDate(Loan loan, int paymentNumber)
@@ -133,3 +214,52 @@ else
 
 
 }
+
+<style>
+    .top-section-grid {
+        display: grid;
+        grid-template-columns: 80px 1fr 1fr 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: max-content auto;
+        row-gap: 3px;
+        column-gap: 12px;
+        font-size: 0.95rem;
+    }
+
+    :deep(.top-section-grid) {
+        display: grid !important;
+        grid-template-columns: 80px 1fr 1fr 1fr !important;
+        gap: 20px !important;
+    }
+
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-box {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        width: 400px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+</style>
+

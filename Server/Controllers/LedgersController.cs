@@ -95,7 +95,7 @@ public class LedgersController : ControllerBase
         public DateTime PaymentDate { get; set; }
         public Guid? CollectorId { get; set; }
         public int PaymentNumber { get; set; }
-        public double PaymentAmount { get; set; } // ✅ Add this
+        public double PaymentAmount { get; set; } 
     }
 
 }
