@@ -1,0 +1,39 @@
+﻿.top-section-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: max-content auto;
+    row-gap: 3px;
+    column-gap: 12px;
+    font-size: 0.95rem;
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-box {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
