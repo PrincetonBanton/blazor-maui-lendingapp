@@ -51,6 +51,25 @@ public class LoansController : ControllerBase
         return NoContent();
     }
 
+    [HttpPut("{id}/payment-update")]
+    public async Task<IActionResult> UpdateLoanPayment(Guid id, Loan updatedLoan)
+    {
+        if (id != updatedLoan.Id)
+            return BadRequest();
+
+        var existingLoan = await _context.Loans.FindAsync(id);
+        if (existingLoan == null)
+            return NotFound();
+
+        // Only update specific fields related to payments
+        existingLoan.RemainingBalance = updatedLoan.RemainingBalance;
+        existingLoan.PaymentsMade = updatedLoan.PaymentsMade;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteLoan(Guid id)
     {

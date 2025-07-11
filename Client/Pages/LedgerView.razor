@@ -164,6 +164,7 @@ else
         showPayDialog = true;
 
     }
+
     async Task SubmitPayment(Loan loan)
     {
         if (loan == null) return;
@@ -178,11 +179,60 @@ else
             Remarks = remarks
         };
 
-        string json = JsonSerializer.Serialize(newLedger, new JsonSerializerOptions { WriteIndented = true });
-        await JS.InvokeVoidAsync("alert", $"Ledger to be posted:\n\n{json}");
+        // Post ledger entry
+        var response = await Http.PostAsJsonAsync("api/ledgers", newLedger);
+        if (!response.IsSuccessStatusCode)
+        {
+            await JS.InvokeVoidAsync("alert", "Failed to post ledger.");
+            return;
+        }
 
-        // Posting to API will be done in next step
+        // Update loan remaining balance and payments made
+        loan.RemainingBalance -= paymentAmount;
+        loan.PaymentsMade += 1;
+
+        var updateResponse = await Http.PutAsJsonAsync($"api/loans/{loan.Id}/payment-update", loan);
+        if (!updateResponse.IsSuccessStatusCode)
+        {
+            await JS.InvokeVoidAsync("alert", "Failed to update loan payment info.");
+            return;
+        }
+
+        await JS.InvokeVoidAsync("alert", $"Payment recorded successfully for installment #{currentPaymentNumber}");
+
+        showPayDialog = false;
+
+        // Reload ledger entries and loan info
+        ledgerEntries = await Http.GetFromJsonAsync<List<Ledger>>($"api/ledgers/loan/{loan.Id}");
+        loan = await Http.GetFromJsonAsync<Loan>($"api/loans/{loan.Id}");
     }
+
+
+    // async Task SubmitPayment(Loan loan)
+    // {
+    //     if (loan == null) return;
+
+    //     var newLedger = new Ledger
+    //     {
+    //         LoanId = loan.Id,
+    //         CollectorId = loan.CollectorId,
+    //         PaymentNumber = currentPaymentNumber,
+    //         PaymentDate = paymentDate,
+    //         PaymentAmount = paymentAmount,
+    //         Remarks = remarks
+    //     };
+
+    //     string json = JsonSerializer.Serialize(newLedger, new JsonSerializerOptions { WriteIndented = true });
+    //     await JS.InvokeVoidAsync("alert", $"Ledger to be posted:\n\n{json}");
+
+    //     double newRemainingBalance = loan.RemainingBalance - paymentAmount;
+    //     await JS.InvokeVoidAsync("alert",
+    //         $"Submitting payment #{currentPaymentNumber}\n" +
+    //         $"Remaining Balance Before: {loan.RemainingBalance:N2}\n" +
+    //         $"Payment Amount: {paymentAmount:N2}\n" +
+    //         $"Remaining Balance After: {newRemainingBalance:N2}");
+    // }
+
     void ClosePayDialog() => showPayDialog = false;
 
     DateTime GetDueDate(Loan loan, int paymentNumber)
