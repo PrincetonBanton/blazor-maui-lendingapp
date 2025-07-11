@@ -4,7 +4,7 @@ public class Loan
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid BorrowerId { get; set; }
-    public Guid? CollectorId { get; set; }
+    public Guid CollectorId { get; set; }
     public double PrincipalAmount { get; set; }
     public double TotalAmount { get; set; }
     public double RemainingBalance { get; set; }

@@ -32,4 +32,13 @@ public class LedgersController : ControllerBase
 
         return ledgers;
     }
+    [HttpPost]
+    public async Task<ActionResult<Ledger>> PostLedger(Ledger ledger)
+    {
+        _context.Ledgers.Add(ledger);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetLedgersForLoan), new { loanId = ledger.LoanId }, ledger);
+    }
+
 }

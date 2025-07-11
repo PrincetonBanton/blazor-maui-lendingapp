@@ -2,6 +2,7 @@
 @inject HttpClient Http
 @using LendingApp.Shared.Models
 @using System.Linq
+@using System.Text.Json
 
 @if (loan == null || borrower == null)
 {
@@ -76,21 +77,66 @@ else
                     <td>@loan.InstallmentAmount.ToString("N2")</td>
                     <td>@(isPaid ? amountPaid.ToString("N2") : "-")</td>
                     <td>@runningBalance.ToString("N2")</td>
-                    <td>@(isPaid ? "Paid" : "Pending")</td>
+                    <td>
+                        @if (isPaid)
+                        { <span class="text-success">✓</span> }
+                        else
+                        { <a href="#" class="ms-2 text-primary" @onclick="() => StartPayment(loan)" @onclick:preventDefault>Pay</a> }
+                    </td>
                     <td>@remarks</td>
                 </tr>
             }
         }
     </tbody>
 </table>
+    @if (showPayDialog)
+    {
+        <div class="modal-backdrop">
+            <div class="modal-box">
+                <h5 class="mb-3">Record Payment</h5>
+
+                <div><strong>Installment #:</strong> @currentPaymentNumber</div>
+                <div><strong>Loan ID:</strong> @loan!.Id</div>
+                <div><strong>Collector ID:</strong> @loan.CollectorId</div>
+
+                <div class="form-group mt-3">
+                    <label>Payment Date</label>
+                    <input type="date" class="form-control" @bind="paymentDate" />
+                </div>
+
+                <div class="form-group mt-2">
+                    <label>Payment Amount</label>
+                    <input type="number" step="0.01" class="form-control" @bind="paymentAmount" />
+                </div>
+
+                <div class="form-group mt-2">
+                    <label>Remarks</label>
+                    <input type="text" class="form-control" @bind="remarks" />
+                </div>
+
+                <div class="d-flex justify-content-end mt-3">
+                    <button class="btn btn-secondary me-2" @onclick="ClosePayDialog">Cancel</button>
+                    <button class="btn btn-primary" @onclick="() => SubmitPayment(loan)">Submit</button>
+                </div>
+            </div>
+        </div>
+    }
 
 }
 
 @code {
+    [Inject] IJSRuntime JS { get; set; } = default!;
     [Parameter] public Guid LoanId { get; set; }
     private Loan? loan;
     private Borrower? borrower;
     private List<Ledger> ledgerEntries = new();
+
+    private bool showPayDialog = false;
+    private int currentPaymentNumber;
+    private DateTime paymentDate = DateTime.Now;
+    private double paymentAmount;
+    private string remarks = string.Empty;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -101,6 +147,43 @@ else
             ledgerEntries = await Http.GetFromJsonAsync<List<Ledger>>($"api/ledgers/loan/{loan.Id}");
         }
     }
+
+    async Task StartPayment(Loan loan)
+    {
+        // int nextPaymentNumber = loan.PaymentsMade + 1;
+        // await JS.InvokeVoidAsync("alert", $"Starting payment for installment #{nextPaymentNumber} for loan {loan.Id}");
+
+        var json = System.Text.Json.JsonSerializer.Serialize(loan, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        await JS.InvokeVoidAsync("alert", $"Starting payment #{loan.PaymentsMade + 1}\n\nLoan Info:\n{json}");
+
+        this.loan = loan;
+        currentPaymentNumber = loan.PaymentsMade + 1;
+        paymentAmount = loan.InstallmentAmount;
+        paymentDate = DateTime.Today;
+        remarks = string.Empty;
+        showPayDialog = true;
+
+    }
+    async Task SubmitPayment(Loan loan)
+    {
+        if (loan == null) return;
+
+        var newLedger = new Ledger
+        {
+            LoanId = loan.Id,
+            CollectorId = loan.CollectorId,
+            PaymentNumber = currentPaymentNumber,
+            PaymentDate = paymentDate,
+            PaymentAmount = paymentAmount,
+            Remarks = remarks
+        };
+
+        string json = JsonSerializer.Serialize(newLedger, new JsonSerializerOptions { WriteIndented = true });
+        await JS.InvokeVoidAsync("alert", $"Ledger to be posted:\n\n{json}");
+
+        // Posting to API will be done in next step
+    }
+    void ClosePayDialog() => showPayDialog = false;
 
     DateTime GetDueDate(Loan loan, int paymentNumber)
     {
@@ -114,4 +197,5 @@ else
         };
         return start.AddDays(interval.TotalDays * (paymentNumber - 1));
     }
+
 }
