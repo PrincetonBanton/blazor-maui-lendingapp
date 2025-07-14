@@ -1,8 +1,12 @@
-﻿namespace LendingApp.CollectorMobile.Models
+﻿public class LoanDisplayModel
 {
-    public class LoanIdDisplayModel
-    {
-        public Guid LoanId { get; set; }
-        public Guid BorrowerId { get; set; }
-    }
+    public Guid Id { get; set; }
+    public string BorrowerName { get; set; } = string.Empty;
+    public double TotalAmount { get; set; }
+    public double InstallmentAmount { get; set; }
+    public int PaymentsMade { get; set; }
+    public int ExpectedPayments { get; set; }
+    public double RemainingBalance { get; set; }
+
+    public string PaymentProgress => $"{PaymentsMade}/{ExpectedPayments}";
 }
