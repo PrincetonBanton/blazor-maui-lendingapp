@@ -1,4 +1,4 @@
-﻿namespace CollectorMobile
+﻿namespace LendingApp.CollectorMobile
 {
     public partial class App : Application
     {

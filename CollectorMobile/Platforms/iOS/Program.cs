@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace CollectorMobile
+namespace LendingApp.CollectorMobile
 {
     public class Program
     {

@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace CollectorMobile
+namespace LendingApp.CollectorMobile
 {
     [Register("AppDelegate")]
     public class AppDelegate : MauiUIApplicationDelegate

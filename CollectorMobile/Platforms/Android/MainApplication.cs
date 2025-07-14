@@ -1,7 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 
-namespace CollectorMobile
+namespace LendingApp.CollectorMobile
 {
     [Application]
     public class MainApplication : MauiApplication

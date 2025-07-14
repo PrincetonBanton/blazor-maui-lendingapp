@@ -207,32 +207,6 @@ else
         loan = await Http.GetFromJsonAsync<Loan>($"api/loans/{loan.Id}");
     }
 
-
-    // async Task SubmitPayment(Loan loan)
-    // {
-    //     if (loan == null) return;
-
-    //     var newLedger = new Ledger
-    //     {
-    //         LoanId = loan.Id,
-    //         CollectorId = loan.CollectorId,
-    //         PaymentNumber = currentPaymentNumber,
-    //         PaymentDate = paymentDate,
-    //         PaymentAmount = paymentAmount,
-    //         Remarks = remarks
-    //     };
-
-    //     string json = JsonSerializer.Serialize(newLedger, new JsonSerializerOptions { WriteIndented = true });
-    //     await JS.InvokeVoidAsync("alert", $"Ledger to be posted:\n\n{json}");
-
-    //     double newRemainingBalance = loan.RemainingBalance - paymentAmount;
-    //     await JS.InvokeVoidAsync("alert",
-    //         $"Submitting payment #{currentPaymentNumber}\n" +
-    //         $"Remaining Balance Before: {loan.RemainingBalance:N2}\n" +
-    //         $"Payment Amount: {paymentAmount:N2}\n" +
-    //         $"Remaining Balance After: {newRemainingBalance:N2}");
-    // }
-
     void ClosePayDialog() => showPayDialog = false;
 
     DateTime GetDueDate(Loan loan, int paymentNumber)

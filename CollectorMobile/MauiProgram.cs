@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace CollectorMobile
+namespace LendingApp.CollectorMobile
 {
     public static class MauiProgram
     {

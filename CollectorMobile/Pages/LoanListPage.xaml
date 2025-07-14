@@ -1,0 +1,61 @@
+<ContentPage
+    x:Class="LendingApp.CollectorMobile.Pages.LoanListPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Background="white">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="10" Spacing="10">
+            <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" />
+
+            <Picker Title="Select Collector" TitleColor="Black" Margin="0,10,0,10"
+                ItemsSource="{Binding CollectorIds}"
+                SelectedItem="{Binding SelectedCollectorId}"
+                SelectedIndexChanged="OnCollectorChanged"
+                TextColor="Black" BackgroundColor="White" />
+
+            <!-- Table Header -->
+            <Grid ColumnDefinitions="7*,7*,7*,7*,7*,7*,7*,7*,7*,7*,7*,7*,7*,7*" Padding="5" BackgroundColor="LightGray">
+                <Label Text="Loan ID" FontAttributes="Bold" />
+                <Label Text="BorrowerId" Grid.Column="1" FontAttributes="Bold" />
+                <Label Text="CollectorId" Grid.Column="2" FontAttributes="Bold" />
+                <Label Text="Principal" Grid.Column="3" FontAttributes="Bold" />
+                <Label Text="Total" Grid.Column="4" FontAttributes="Bold" />
+                <Label Text="Balance" Grid.Column="5" FontAttributes="Bold" />
+                <Label Text="Applied" Grid.Column="6" FontAttributes="Bold" />
+                <Label Text="Approved" Grid.Column="7" FontAttributes="Bold" />
+                <Label Text="Start" Grid.Column="8" FontAttributes="Bold" />
+                <Label Text="End" Grid.Column="9" FontAttributes="Bold" />
+                <Label Text="Term" Grid.Column="10" FontAttributes="Bold" />
+                <Label Text="Rate%" Grid.Column="11" FontAttributes="Bold" />
+                <Label Text="Freq" Grid.Column="12" FontAttributes="Bold" />
+                <Label Text="Status" Grid.Column="13" FontAttributes="Bold" />
+            </Grid>
+
+
+            <!-- Table Rows -->
+            <CollectionView ItemsSource="{Binding FilteredLoans}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="7*,7*,7*,7*,7*,7*,7*,7*,7*,7*,7*,7*,7*,7*" Padding="5" BackgroundColor="White">
+                            <Label Text="{Binding Id}" FontSize="11" />
+                            <Label Text="{Binding BorrowerId}" Grid.Column="1" FontSize="11" />
+                            <Label Text="{Binding CollectorId}" Grid.Column="2" FontSize="11" />
+                            <Label Text="{Binding PrincipalAmount, StringFormat='₱{0:N2}'}" Grid.Column="3" FontSize="11" />
+                            <Label Text="{Binding TotalAmount, StringFormat='₱{0:N2}'}" Grid.Column="4" FontSize="11" />
+                            <Label Text="{Binding RemainingBalance, StringFormat='₱{0:N2}'}" Grid.Column="5" FontSize="11" />
+                            <Label Text="{Binding ApplicationDate, StringFormat='{0:yyyy-MM-dd}'}" Grid.Column="6" FontSize="11" />
+                            <Label Text="{Binding ApprovalDate, StringFormat='{0:yyyy-MM-dd}'}" Grid.Column="7" FontSize="11" />
+                            <Label Text="{Binding StartDate, StringFormat='{0:yyyy-MM-dd}'}" Grid.Column="8" FontSize="11" />
+                            <Label Text="{Binding EndDate, StringFormat='{0:yyyy-MM-dd}'}" Grid.Column="9" FontSize="11" />
+                            <Label Text="{Binding TermInMonths}" Grid.Column="10" FontSize="11" />
+                            <Label Text="{Binding MonthlyInterestRate}" Grid.Column="11" FontSize="11" />
+                            <Label Text="{Binding PaymentFrequency}" Grid.Column="12" FontSize="11" />
+                            <Label Text="{Binding Status}" Grid.Column="13" FontSize="11" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
