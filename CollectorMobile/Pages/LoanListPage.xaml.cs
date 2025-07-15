@@ -1,6 +1,7 @@
 using LendingApp.Shared.Models;
 using System.Collections.ObjectModel;
 using System.Net.Http.Json;
+using LendingApp.CollectorMobile.ViewModels;
 
 namespace LendingApp.CollectorMobile.Pages;
 
@@ -9,7 +10,7 @@ public partial class LoanListPage : ContentPage
     private readonly HttpClient _http = new();
     private readonly string _baseUrl = "https://localhost:7141/api";
 
-    public ObservableCollection<LoanDisplayModel> FilteredLoans { get; set; } = new();
+    public ObservableCollection<LoanListModel> FilteredLoans { get; set; } = new();
     public ObservableCollection<Guid> CollectorIds { get; set; } = new();
 
     private List<Loan>? AllLoans;
@@ -66,7 +67,7 @@ public partial class LoanListPage : ContentPage
         {
             var borrower = AllBorrowers.FirstOrDefault(b => b.Id == loan.BorrowerId);
 
-            FilteredLoans.Add(new LoanDisplayModel
+            FilteredLoans.Add(new LoanListModel
             {
                 Id = loan.Id,
                 BorrowerName = borrower?.FullName ?? "Unknown",
@@ -88,4 +89,17 @@ public partial class LoanListPage : ContentPage
             ApplyFilter();
         }
     }
+
+    private async void OnViewLedgerTapped(object sender, EventArgs e)
+    {
+        if (sender is Label label && label.BindingContext is LoanListModel selectedLoan)
+        {
+            var fullLoan = AllLoans.FirstOrDefault(l => l.Id == selectedLoan.Id);
+            if (fullLoan != null)
+            {
+                await Navigation.PushAsync(new LedgerViewPage(fullLoan));
+            }
+        }
+    }
+
 }

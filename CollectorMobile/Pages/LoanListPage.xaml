@@ -15,7 +15,7 @@
                 TextColor="Black" BackgroundColor="White" />
 
             <!-- Table Header -->
-            <Grid ColumnDefinitions="15*,15*,15*,15*,15*" Padding="5" BackgroundColor="LightGray">
+            <Grid ColumnDefinitions="15*,15*,15*,15*,15*,15*" Padding="5" BackgroundColor="LightGray">
                 <Label Text="Name" Grid.Column="0" FontAttributes="Bold" />
                 <Label Text="Total" Grid.Column="1" FontAttributes="Bold" />
                 <Label Text="Installment" Grid.Column="2" FontAttributes="Bold" />
@@ -23,17 +23,21 @@
                 <Label Text="Balance" Grid.Column="4" FontAttributes="Bold" />
             </Grid>
 
-
             <!-- Table Rows -->
             <CollectionView ItemsSource="{Binding FilteredLoans}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Grid ColumnDefinitions="15*,15*,15*,15*,15*" Padding="5" BackgroundColor="White">
+                        <Grid ColumnDefinitions="15*,15*,15*,15*,15*,15*" Padding="5" BackgroundColor="White">
                             <Label Text="{Binding BorrowerName}" Grid.Column="0" />
                             <Label Text="{Binding TotalAmount, StringFormat='{0:N2}'}" Grid.Column="1" />
-                            <Label Text="{Binding InstallmentAmount, StringFormat='₱{0:N2}'}" Grid.Column="2" />
+                            <Label Text="{Binding InstallmentAmount, StringFormat='{0:N2}'}" Grid.Column="2" />
                             <Label Text="{Binding PaymentProgress}" Grid.Column="3" />
                             <Label Text="{Binding RemainingBalance, StringFormat='{0:N2}'}" Grid.Column="4" />
+                            <Label Grid.Column="5" Text="View Ledger" TextColor="Blue" HorizontalOptions="Center" VerticalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnViewLedgerTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
