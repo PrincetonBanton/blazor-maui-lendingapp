@@ -4,91 +4,132 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     BackgroundColor="White">
 
-    <VerticalStackLayout Padding="10" Spacing="5">
-        <Grid ColumnDefinitions="30*,70*">
-            <VerticalStackLayout Grid.Column="0">
-                <Image Source="profile.png" WidthRequest="80" HeightRequest="80" Aspect="AspectFill" HorizontalOptions="Start" />
-            </VerticalStackLayout>
-            <VerticalStackLayout Grid.Column="1">
+    <!-- Use Grid to overlay modal on top -->
+    <Grid>
+        <!-- Scrollable content area -->
+        <ScrollView>
+            <VerticalStackLayout Padding="10" Spacing="5">
+
+                <!-- Borrower Info -->
                 <Grid ColumnDefinitions="30*,70*">
-                    <Label Text="Name:" FontAttributes="Bold" />
-                    <Label Text="{Binding BorrowerName}" Grid.Column="1" />
+                    <VerticalStackLayout Grid.Column="0">
+                        <Image Source="profile.png" WidthRequest="80" HeightRequest="80" Aspect="AspectFill" HorizontalOptions="Start" />
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1">
+                        <Grid ColumnDefinitions="30*,70*">
+                            <Label Text="Name:" FontAttributes="Bold" />
+                            <Label Text="{Binding BorrowerName}" Grid.Column="1" />
+                        </Grid>
+                        <Grid ColumnDefinitions="30*,70*">
+                            <Label Text="Contact:" FontAttributes="Bold" />
+                            <Label Text="{Binding ContactNumber}" Grid.Column="1" />
+                        </Grid>
+                        <Grid ColumnDefinitions="30*,70*">
+                            <Label Text="Address:" FontAttributes="Bold" />
+                            <Label Text="{Binding Address}" Grid.Column="1" />
+                        </Grid>
+                    </VerticalStackLayout>
                 </Grid>
-                <Grid ColumnDefinitions="30*,70*">
-                    <Label Text="Contact:" FontAttributes="Bold" />
-                    <Label Text="{Binding ContactNumber}" Grid.Column="1" />
+
+                <!-- Loan Info -->
+                <Grid ColumnDefinitions="50*,50*">
+                    <VerticalStackLayout Grid.Column="0">
+                        <Grid ColumnDefinitions="50*,50*">
+                            <Label Text="Principal:" FontAttributes="Bold" />
+                            <Label Text="{Binding PrincipalAmount, StringFormat='{0:N2}'}" Grid.Column="1" />
+                        </Grid>
+                        <Grid ColumnDefinitions="50*,50*">
+                            <Label Text="Total:" FontAttributes="Bold" />
+                            <Label Text="{Binding TotalAmount, StringFormat='{0:N2}'}" Grid.Column="1" />
+                        </Grid>
+                        <Grid ColumnDefinitions="50*,50*">
+                            <Label Text="Balance:" FontAttributes="Bold" />
+                            <Label Text="{Binding RemainingBalance, StringFormat='{0:N2}'}" Grid.Column="1" />
+                        </Grid>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1">
+                        <Grid ColumnDefinitions="50*,50*">
+                            <Label Text="Payment:" FontAttributes="Bold" />
+                            <Label Text="{Binding InstallmentAmount, StringFormat='{0:N2}'}" Grid.Column="1" />
+                        </Grid>
+                        <Grid ColumnDefinitions="50*,50*">
+                            <Label Text="Paid:" FontAttributes="Bold" />
+                            <Label Text="{Binding PaymentProgress}" Grid.Column="1" />
+                        </Grid>
+                        <Grid ColumnDefinitions="50*,50*">
+                            <Label Text="Mode:" FontAttributes="Bold" />
+                            <Label Text="{Binding PaymentMode}" Grid.Column="1" />
+                        </Grid>
+                    </VerticalStackLayout>
                 </Grid>
-                <Grid ColumnDefinitions="30*,70*">
-                    <Label Text="Address:" FontAttributes="Bold" />
-                    <Label Text="{Binding Address}" Grid.Column="1" />
+
+                <!-- Ledger Table Header -->
+                <Grid ColumnDefinitions="10*,15*,15*,15*,15*,15*,15*" Padding="5" BackgroundColor="LightGray">
+                    <Label Text="#" Grid.Column="0" />
+                    <Label Text="Due" Grid.Column="1" />
+                    <Label Text="Paid" Grid.Column="2" />
+                    <Label Text="Due" Grid.Column="3" />
+                    <Label Text="Paid" Grid.Column="4" />
+                    <Label Text="Balance" Grid.Column="5" />
+                    <Label Text="Status" Grid.Column="6" />
                 </Grid>
+
+                <!-- Ledger Schedule -->
+                <CollectionView ItemsSource="{Binding Schedule}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="10*,15*,15*,15*,15*,15*,15*" Padding="5" RowSpacing="10">
+                                <Label Text="{Binding PaymentNumber}" Grid.Column="0" VerticalOptions="Center" />
+                                <Label Text="{Binding DueDate, StringFormat='{0:MM/dd/yyyy}'}" Grid.Column="1" VerticalOptions="Center" />
+                                <Label Text="{Binding DisplayPaymentDate}" Grid.Column="2" VerticalOptions="Center" />
+                                <Label Text="{Binding AmountDue, StringFormat='{0:N2}'}" Grid.Column="3" VerticalOptions="Center" />
+                                <Label Text="{Binding DisplayAmountPaid}" Grid.Column="4" VerticalOptions="Center" />
+                                <Label Text="{Binding RunningBalance, StringFormat='{0:N2}'}" Grid.Column="5" VerticalOptions="Center" />
+                                <StackLayout Grid.Column="6" Spacing="0">
+                                    <Label x:Name="statusLabel" Text="✔" TextColor="Green" FontSize="16" VerticalOptions="Center" />
+                                    <Label x:Name="payLink" Text="Pay" TextColor="Red" FontSize="12" Padding="0" IsVisible="False" VerticalOptions="Center">
+                                        <Label.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnPayTapped" CommandParameter="{Binding}" />
+                                        </Label.GestureRecognizers>
+                                    </Label>
+                                    <StackLayout.Triggers>
+                                        <DataTrigger TargetType="StackLayout" Binding="{Binding DisplayAmountPaid}" Value="-">
+                                            <Setter TargetName="statusLabel" Property="IsVisible" Value="False" />
+                                            <Setter TargetName="payLink" Property="IsVisible" Value="True" />
+                                        </DataTrigger>
+                                    </StackLayout.Triggers>
+                                </StackLayout>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
             </VerticalStackLayout>
-        </Grid>
-        <Grid ColumnDefinitions="50*,50*">
-            <VerticalStackLayout Grid.Column="0">
-                <Grid ColumnDefinitions="50*,50*">
-                    <Label Text="Principal:" FontAttributes="Bold" />
-                    <Label Text="{Binding PrincipalAmount, StringFormat='{0:N2}'}" Grid.Column="1" />
-                </Grid>
-                <Grid ColumnDefinitions="50*,50*">
-                    <Label Text="Total:" FontAttributes="Bold" />
-                    <Label Text="{Binding TotalAmount, StringFormat='{0:N2}'}" Grid.Column="1" />
-                </Grid>
-                <Grid ColumnDefinitions="50*,50*">
-                    <Label Text="Balance:" FontAttributes="Bold" />
-                    <Label Text="{Binding RemainingBalance, StringFormat='{0:N2}'}" Grid.Column="1" />
-                </Grid>
-            </VerticalStackLayout>    
-             <VerticalStackLayout Grid.Column="1">
-                <Grid ColumnDefinitions="50*,50*">
-                    <Label Text="Payment:" FontAttributes="Bold" />
-                    <Label Text="{Binding InstallmentAmount, StringFormat='{0:N2}'}" Grid.Column="1" />
-                </Grid>
-                <Grid ColumnDefinitions="50*,50*">
-                    <Label Text="Paid:" FontAttributes="Bold" />
-                    <Label Text="{Binding PaymentProgress}" Grid.Column="1" />
-                </Grid>
-                <Grid ColumnDefinitions="50*,50*">
-                    <Label Text="Mode:" FontAttributes="Bold" />
-                    <Label Text="{Binding PaymentMode}" Grid.Column="1" />
-                </Grid>
-            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Centered Modal Overlay -->
+        <Grid x:Name="PayModal" BackgroundColor="#80000080" IsVisible="False">
+            <Frame BackgroundColor="White" Padding="20" WidthRequest="500" CornerRadius="0"
+           VerticalOptions="Center" HorizontalOptions="Center">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Record Payment" FontAttributes="Bold" FontSize="18" />
+                    <Label Text="{Binding CurrentInstallmentLabel}" FontAttributes="Bold" />
+                    <Label Text="Loan ID:" FontAttributes="Bold" />
+                    <Label Text="{Binding PaymentEntry.LoanId}" FontSize="12" TextColor="Gray" />
+                    <Label Text="Collector ID:" FontAttributes="Bold" />
+                    <Label Text="{Binding PaymentEntry.CollectorId}" FontSize="12" TextColor="Gray" />
+                    <Label Text="Payment Date" />
+                    <DatePicker Date="{Binding PaymentEntry.PaymentDate}" />
+                    <Label Text="Payment Amount" />
+                    <Entry Text="{Binding PaymentEntry.PaymentAmount}" Keyboard="Numeric" TextColor="Red" />
+                    <Label Text="Remarks" />
+                    <Entry Text="{Binding PaymentEntry.Remarks}" />
+                    <HorizontalStackLayout HorizontalOptions="End">
+                        <Button Text="Cancel" Clicked="OnCancelPayment" />
+                        <Button Text="Submit" Clicked="OnSubmitPayment" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
         </Grid>
 
-        <Grid ColumnDefinitions="10*,15*,15*,15*,15*,15*,15*" Padding="5" BackgroundColor="LightGray">
-            <Label Text="#" Grid.Column="0" />
-            <Label Text="Due" Grid.Column="1" />
-            <Label Text="Paid" Grid.Column="2" />
-            <Label Text="Due" Grid.Column="3" />
-            <Label Text="Paid" Grid.Column="4" />
-            <Label Text="Balance" Grid.Column="5" />
-            <Label Text="Status" Grid.Column="6" />
-        </Grid>
-        <CollectionView ItemsSource="{Binding Schedule}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Grid ColumnDefinitions="10*,15*,15*,15*,15*,15*,15*" Padding="5">
-                        <Label Text="{Binding PaymentNumber}" Grid.Column="0" />
-                        <Label Text="{Binding DueDate, StringFormat='{0:MM/dd/yyyy}'}" Grid.Column="1" />
-                        <Label Text="{Binding DisplayPaymentDate}" Grid.Column="2" />
-                        <Label Text="{Binding AmountDue, StringFormat='{0:N2}'}" Grid.Column="3" />
-                        <Label Text="{Binding DisplayAmountPaid}" Grid.Column="4" />
-                        <Label Text="{Binding RunningBalance, StringFormat='{0:N2}'}" Grid.Column="5" />
-                        <StackLayout Grid.Column="6">
-                            <Label x:Name="statusLabel" Text="✔" TextColor="Green" />
-                            <Label x:Name="payLink" Text="Pay" IsVisible="False" TextColor="Red"/>
-                            <StackLayout.Triggers>
-                                <DataTrigger TargetType="StackLayout" Binding="{Binding DisplayAmountPaid}" Value="-">
-                                    <Setter TargetName="statusLabel" Property="IsVisible" Value="False" />
-                                    <Setter TargetName="payLink" Property="IsVisible" Value="True" />
-                                </DataTrigger>
-                            </StackLayout.Triggers>
-                        </StackLayout>
-
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-
-    </VerticalStackLayout>
+    </Grid>
 </ContentPage>

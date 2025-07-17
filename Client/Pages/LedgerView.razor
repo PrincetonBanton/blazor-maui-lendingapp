@@ -94,26 +94,21 @@ else
         <div class="modal-backdrop">
             <div class="modal-box">
                 <h5 class="mb-3">Record Payment</h5>
-
                 <div><strong>Installment #:</strong> @currentPaymentNumber</div>
                 <div><strong>Loan ID:</strong> @loan!.Id</div>
                 <div><strong>Collector ID:</strong> @loan.CollectorId</div>
-
                 <div class="form-group mt-3">
                     <label>Payment Date</label>
                     <input type="date" class="form-control" @bind="paymentDate" />
                 </div>
-
                 <div class="form-group mt-2">
                     <label>Payment Amount</label>
                     <input type="number" step="0.01" class="form-control" @bind="paymentAmount" />
                 </div>
-
                 <div class="form-group mt-2">
                     <label>Remarks</label>
                     <input type="text" class="form-control" @bind="remarks" />
                 </div>
-
                 <div class="d-flex justify-content-end mt-3">
                     <button class="btn btn-secondary me-2" @onclick="ClosePayDialog">Cancel</button>
                     <button class="btn btn-primary" @onclick="() => SubmitPayment(loan)">Submit</button>
@@ -152,9 +147,8 @@ else
     {
         // int nextPaymentNumber = loan.PaymentsMade + 1;
         // await JS.InvokeVoidAsync("alert", $"Starting payment for installment #{nextPaymentNumber} for loan {loan.Id}");
-
-        var json = System.Text.Json.JsonSerializer.Serialize(loan, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-        await JS.InvokeVoidAsync("alert", $"Starting payment #{loan.PaymentsMade + 1}\n\nLoan Info:\n{json}");
+        // var json = System.Text.Json.JsonSerializer.Serialize(loan, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        // await JS.InvokeVoidAsync("alert", $"Starting payment #{loan.PaymentsMade + 1}\n\nLoan Info:\n{json}");
 
         this.loan = loan;
         currentPaymentNumber = loan.PaymentsMade + 1;

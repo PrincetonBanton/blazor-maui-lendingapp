@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using LendingApp.CollectorMobile.Models; // Required for PaymentEntryModel
 
 namespace LendingApp.CollectorMobile.ViewModels
 {
@@ -7,8 +8,9 @@ namespace LendingApp.CollectorMobile.ViewModels
     {
         public Guid LoanId { get; set; }
         public Guid BorrowerId { get; set; }
+        public Guid CollectorId { get; set; } // For posting payment
 
-        public double PrincipalAmount { get; set; } 
+        public double PrincipalAmount { get; set; }
         public double TotalAmount { get; set; }
         public double RemainingBalance { get; set; }
         public double InstallmentAmount { get; set; }
@@ -32,6 +34,10 @@ namespace LendingApp.CollectorMobile.ViewModels
         public string Address { get; set; } = string.Empty;
 
         public List<LedgerRow> Schedule { get; set; } = new();
+
+        // Modal-related
+        public string CurrentInstallmentLabel { get; set; } = string.Empty;
+        public PaymentEntryModel PaymentEntry { get; set; } = new();
     }
 
     public class LedgerRow
@@ -48,6 +54,6 @@ namespace LendingApp.CollectorMobile.ViewModels
 
         public string DisplayPaymentDate => PaymentDate.HasValue ? PaymentDate.Value.ToString("MM/dd/yyyy") : "-";
         public string DisplayAmountPaid => AmountPaid > 0 ? AmountPaid.ToString("N2") : "-";
-
     }
+
 }

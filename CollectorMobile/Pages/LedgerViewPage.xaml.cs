@@ -1,5 +1,6 @@
 using LendingApp.Shared.Models;
 using LendingApp.CollectorMobile.ViewModels;
+using LendingApp.CollectorMobile.Models; // Required for PaymentEntryModel
 using System.Net.Http.Json;
 
 namespace LendingApp.CollectorMobile.Pages;
@@ -21,17 +22,14 @@ public partial class LedgerViewPage : ContentPage
             BaseAddress = new Uri("https://localhost:7141") // Replace with your actual backend base URL
         };
 
-        // Fetch borrower info
         var borrower = await http.GetFromJsonAsync<Borrower>($"api/borrowers/{loan.BorrowerId}");
-
-        // Fetch ledger entries
         var ledgerEntries = await http.GetFromJsonAsync<List<Ledger>>($"api/ledgers/loan/{loan.Id}") ?? new();
 
-        // Initialize ViewModel
         ViewModel = new LedgerViewModel
         {
             LoanId = loan.Id,
             BorrowerId = loan.BorrowerId,
+            CollectorId = loan.CollectorId,
             PrincipalAmount = loan.PrincipalAmount,
             TotalAmount = loan.TotalAmount,
             RemainingBalance = loan.RemainingBalance,
@@ -45,10 +43,7 @@ public partial class LedgerViewPage : ContentPage
             StartDate = loan.StartDate
         };
 
-        // Generate Ledger Schedule
         ViewModel.Schedule = GenerateSchedule(ViewModel, ledgerEntries);
-
-        // Bind to UI
         BindingContext = ViewModel;
     }
 
@@ -91,5 +86,70 @@ public partial class LedgerViewPage : ContentPage
 
         return schedule;
     }
+
+    private void OnPayTapped(object sender, EventArgs e)
+    {
+        if ((sender as Label)?.BindingContext is LedgerRow row)
+        {
+            ViewModel.CurrentInstallmentLabel = $"Installment #{row.PaymentNumber}";
+
+            // Reinitialize the PaymentEntryModel with default values
+            ViewModel.PaymentEntry = new PaymentEntryModel
+            {
+                LoanId = ViewModel.LoanId,
+                CollectorId = ViewModel.CollectorId,
+                PaymentDate = DateTime.Now,
+                PaymentAmount = row.AmountDue,
+                Remarks = ""
+            };
+
+            // Force refresh of the binding
+            BindingContext = null;
+            BindingContext = ViewModel;
+
+            PayModal.IsVisible = true;
+
+        }
+    }
+
+    private void OnCancelPayment(object sender, EventArgs e)
+    {
+        PayModal.IsVisible = false;
+    }
+
+    private async void OnSubmitPayment(object sender, EventArgs e)
+    {
+        var entry = ViewModel.PaymentEntry;
+        if (entry.PaymentAmount <= 0)
+        {
+            await DisplayAlert("Validation", "Please enter a valid payment amount.", "OK");
+            return;
+        }
+        var nextPaymentNumber = ViewModel.Schedule.FirstOrDefault(s => s.DisplayAmountPaid == "-")?.PaymentNumber ?? 1;
+
+        // Create the new ledger record
+        var newLedger = new Ledger
+        {
+            LoanId = entry.LoanId,
+            CollectorId = entry.CollectorId,
+            PaymentNumber = nextPaymentNumber,
+            PaymentDate = entry.PaymentDate,
+            PaymentAmount = entry.PaymentAmount,
+            Remarks = entry.Remarks
+        };
+
+        string json = System.Text.Json.JsonSerializer.Serialize(newLedger, new System.Text.Json.JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        await DisplayAlert("Preview Ledger Payload", json, "OK");
+
+        // TODO: Send `newLedger` to your backend API via POST here
+
+        PayModal.IsVisible = false;
+    }
+
+
 
 }
