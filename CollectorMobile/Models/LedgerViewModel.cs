@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using LendingApp.CollectorMobile.Models; // Required for PaymentEntryModel
-
+using LendingApp.CollectorMobile.Models; 
 namespace LendingApp.CollectorMobile.ViewModels
 {
     public class LedgerViewModel
@@ -38,6 +37,17 @@ namespace LendingApp.CollectorMobile.ViewModels
         // Modal-related
         public string CurrentInstallmentLabel { get; set; } = string.Empty;
         public PaymentEntryModel PaymentEntry { get; set; } = new();
+        public Loan ToLoan()
+        {
+            return new Loan
+            {
+                Id = this.LoanId,
+                RemainingBalance = this.RemainingBalance,
+                PaymentsMade = this.PaymentsMade
+                // Add other fields if needed
+            };
+        }
+
     }
 
     public class LedgerRow
@@ -54,6 +64,8 @@ namespace LendingApp.CollectorMobile.ViewModels
 
         public string DisplayPaymentDate => PaymentDate.HasValue ? PaymentDate.Value.ToString("MM/dd/yyyy") : "-";
         public string DisplayAmountPaid => AmountPaid > 0 ? AmountPaid.ToString("N2") : "-";
+
     }
+
 
 }

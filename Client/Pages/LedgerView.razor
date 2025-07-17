@@ -119,101 +119,96 @@ else
 
 }
 
-@code {
-    [Inject] IJSRuntime JS { get; set; } = default!;
-    [Parameter] public Guid LoanId { get; set; }
-    private Loan? loan;
-    private Borrower? borrower;
-    private List<Ledger> ledgerEntries = new();
+    @code {
+        [Inject] IJSRuntime JS { get; set; } = default!;
+        [Parameter] public Guid LoanId { get; set; }
+        private Loan? loan;
+        private Borrower? borrower;
+        private List<Ledger> ledgerEntries = new();
 
-    private bool showPayDialog = false;
-    private int currentPaymentNumber;
-    private DateTime paymentDate = DateTime.Now;
-    private double paymentAmount;
-    private string remarks = string.Empty;
+        private bool showPayDialog = false;
+        private int currentPaymentNumber;
+        private DateTime paymentDate = DateTime.Now;
+        private double paymentAmount;
+        private string remarks = string.Empty;
 
 
-    protected override async Task OnInitializedAsync()
-    {
-        loan = await Http.GetFromJsonAsync<Loan>($"api/loans/{LoanId}");
-        if (loan != null)
+        protected override async Task OnInitializedAsync()
         {
-            borrower = await Http.GetFromJsonAsync<Borrower>($"api/borrowers/{loan.BorrowerId}");
+            loan = await Http.GetFromJsonAsync<Loan>($"api/loans/{LoanId}");
+            if (loan != null)
+            {
+                borrower = await Http.GetFromJsonAsync<Borrower>($"api/borrowers/{loan.BorrowerId}");
+                ledgerEntries = await Http.GetFromJsonAsync<List<Ledger>>($"api/ledgers/loan/{loan.Id}");
+            }
+        }
+
+        async Task StartPayment(Loan loan)
+        {
+            // var json = System.Text.Json.JsonSerializer.Serialize(loan, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            // await JS.InvokeVoidAsync("alert", $"Starting payment #{loan.PaymentsMade + 1}\n\nLoan Info:\n{json}");
+            this.loan = loan;
+            currentPaymentNumber = loan.PaymentsMade + 1;
+            paymentAmount = loan.InstallmentAmount;
+            paymentDate = DateTime.Today;
+            remarks = string.Empty;
+            showPayDialog = true;
+
+        }
+
+        async Task SubmitPayment(Loan loan)
+        {
+            if (loan == null) return;
+
+            var newLedger = new Ledger
+            {
+                LoanId = loan.Id,
+                CollectorId = loan.CollectorId,
+                PaymentNumber = currentPaymentNumber,
+                PaymentDate = paymentDate,
+                PaymentAmount = paymentAmount,
+                Remarks = remarks
+            };
+
+            // Post ledger entry
+            var response = await Http.PostAsJsonAsync("api/ledgers", newLedger);
+            if (!response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", "Failed to post ledger.");
+                return;
+            }
+            // Update loan remaining balance and payments made
+            loan.RemainingBalance -= paymentAmount;
+            loan.PaymentsMade += 1;
+            var updateResponse = await Http.PutAsJsonAsync($"api/loans/{loan.Id}/payment-update", loan);
+            if (!updateResponse.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", "Failed to update loan payment info.");
+                return;
+            }
+
+            await JS.InvokeVoidAsync("alert", $"Payment recorded successfully for installment #{currentPaymentNumber}");
+
+            showPayDialog = false;
+
+            // Reload ledger entries and loan info
             ledgerEntries = await Http.GetFromJsonAsync<List<Ledger>>($"api/ledgers/loan/{loan.Id}");
-        }
-    }
-
-    async Task StartPayment(Loan loan)
-    {
-        // int nextPaymentNumber = loan.PaymentsMade + 1;
-        // await JS.InvokeVoidAsync("alert", $"Starting payment for installment #{nextPaymentNumber} for loan {loan.Id}");
-        // var json = System.Text.Json.JsonSerializer.Serialize(loan, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-        // await JS.InvokeVoidAsync("alert", $"Starting payment #{loan.PaymentsMade + 1}\n\nLoan Info:\n{json}");
-
-        this.loan = loan;
-        currentPaymentNumber = loan.PaymentsMade + 1;
-        paymentAmount = loan.InstallmentAmount;
-        paymentDate = DateTime.Today;
-        remarks = string.Empty;
-        showPayDialog = true;
-
-    }
-
-    async Task SubmitPayment(Loan loan)
-    {
-        if (loan == null) return;
-
-        var newLedger = new Ledger
-        {
-            LoanId = loan.Id,
-            CollectorId = loan.CollectorId,
-            PaymentNumber = currentPaymentNumber,
-            PaymentDate = paymentDate,
-            PaymentAmount = paymentAmount,
-            Remarks = remarks
-        };
-
-        // Post ledger entry
-        var response = await Http.PostAsJsonAsync("api/ledgers", newLedger);
-        if (!response.IsSuccessStatusCode)
-        {
-            await JS.InvokeVoidAsync("alert", "Failed to post ledger.");
-            return;
+            loan = await Http.GetFromJsonAsync<Loan>($"api/loans/{loan.Id}");
         }
 
-        // Update loan remaining balance and payments made
-        loan.RemainingBalance -= paymentAmount;
-        loan.PaymentsMade += 1;
+        void ClosePayDialog() => showPayDialog = false;
 
-        var updateResponse = await Http.PutAsJsonAsync($"api/loans/{loan.Id}/payment-update", loan);
-        if (!updateResponse.IsSuccessStatusCode)
+        DateTime GetDueDate(Loan loan, int paymentNumber)
         {
-            await JS.InvokeVoidAsync("alert", "Failed to update loan payment info.");
-            return;
+            var start = loan.StartDate ?? DateTime.Now;
+            var interval = loan.PaymentFrequency switch
+            {
+                PaymentFrequency.Daily => TimeSpan.FromDays(1),
+                PaymentFrequency.Weekly => TimeSpan.FromDays(7),
+                PaymentFrequency.Monthly => TimeSpan.FromDays(30),
+                _ => TimeSpan.FromDays(30)
+            };
+            return start.AddDays(interval.TotalDays * (paymentNumber - 1));
         }
 
-        await JS.InvokeVoidAsync("alert", $"Payment recorded successfully for installment #{currentPaymentNumber}");
-
-        showPayDialog = false;
-
-        // Reload ledger entries and loan info
-        ledgerEntries = await Http.GetFromJsonAsync<List<Ledger>>($"api/ledgers/loan/{loan.Id}");
-        loan = await Http.GetFromJsonAsync<Loan>($"api/loans/{loan.Id}");
     }
-
-    void ClosePayDialog() => showPayDialog = false;
-
-    DateTime GetDueDate(Loan loan, int paymentNumber)
-    {
-        var start = loan.StartDate ?? DateTime.Now;
-        var interval = loan.PaymentFrequency switch
-        {
-            PaymentFrequency.Daily => TimeSpan.FromDays(1),
-            PaymentFrequency.Weekly => TimeSpan.FromDays(7),
-            PaymentFrequency.Monthly => TimeSpan.FromDays(30),
-            _ => TimeSpan.FromDays(30)
-        };
-        return start.AddDays(interval.TotalDays * (paymentNumber - 1));
-    }
-
-}
